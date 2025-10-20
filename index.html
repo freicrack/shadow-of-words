@@ -71,15 +71,108 @@
   .pill .count{background:#2b1b1b;padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.03);font-weight:800;color:var(--accent)}
 
   /* responsive */
-  @media(max-width:640px){
-    .stage{flex-direction:column;gap:12px}
-    #playerChar{margin-bottom: 70px;}
-    #enemyChar{margin-bottom: 70px;}
-    .panel{width:100%}
-    .hud{flex-direction:column;align-items:center;width:50%;margin-top:150px}
-    .stat{max-width:300px}
-    .character img{width:180px}
-    .character{width:220px;height:260px}
+/* Responsive - móviles pequeños (hasta 640px) */
+@media (max-width: 640px) {
+  body {
+    padding: 0;
+    margin: 0;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #0a0a0a;
+  }
+
+  /* HUD (barras de vida + puntuación) */
+  .hud {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 95%;
+    margin-top: 15px;
+    gap: 10px;
+    position: relative;
+    z-index: 5;
+  }
+
+  .stat {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  /* Escenario (personajes) */
+  .stage {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 45px; /* ← separación visual entre jugador y enemigo */
+    width: 100%;
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+
+  /* Personajes */
+  .character {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 200px;
+    height: 220px;
+  }
+
+  .character img {
+    width: 160px;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 8px #000);
+  }
+
+  /* Panel de texto y botones */
+  .panel {
+    width: 90%;
+    padding: 12px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+  }
+
+  .btn {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+
+  /* Contenedor general */
+  .game-wrap {
+    width: 100%;
+    max-width: 420px;
+    padding: 10px;
+  }
+}
+
+/* Extra - móviles muy estrechos (<420px) */
+@media (max-width: 420px) {
+  .stage {
+    gap: 60px; /* más separación entre personajes */
+  }
+
+  .character img {
+    width: 140px; /* ajusta el tamaño de sprite */
+  }
+
+  .hud {
+    margin-top: 10px;
+    gap: 6px;
+  }
+
+  .panel {
+    padding: 8px;
+  }
+
+  .btn {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+}
+
 }
 </style>
 </head>
