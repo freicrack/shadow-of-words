@@ -105,7 +105,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 45px; /* ← separación visual entre jugador y enemigo */
+    gap: 65px; /* ← separación visual entre jugador y enemigo */
     width: 100%;
     margin-top: 20px;
     margin-bottom: 10px;
@@ -149,31 +149,7 @@
 }
 
 /* Extra - móviles muy estrechos (<420px) */
-@media (max-width: 420px) {
-  .stage {
-    gap: 60px; /* más separación entre personajes */
-  }
 
-  .character img {
-    width: 140px; /* ajusta el tamaño de sprite */
-  }
-
-  .hud {
-    margin-top: 10px;
-    gap: 6px;
-  }
-
-  .panel {
-    padding: 8px;
-  }
-
-  .btn {
-    font-size: 13px;
-    padding: 8px 10px;
-  }
-}
-
-}
 </style>
 </head>
 <body>
