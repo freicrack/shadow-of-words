@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Shadow of Words — Retro 16-bit (Animated)</title>
+<style>
+  :root{
+    --accent:#b69d6a;
+    --muted:#cfc8bb;
+    --panel: rgba(10,8,12,0.68);
+    --danger:#bb3b3b;
+    --win:#6dbf6d;
+    --shadow: 0 8px 18px rgba(0,0,0,0.6);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:#070608;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:var(--muted)}
+  body{display:flex;align-items:center;justify-content:center;padding:18px;background:radial-gradient(circle at center,#070607 0%, #030303 80%)}
+
+  .game-wrap{width:100%;max-width:980px;min-height:560px;background:linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.7));border-radius:12px;box-shadow:var(--shadow);overflow:hidden;position:relative}
+  header{display:flex;align-items:center;gap:18px;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.03)}
+  h1{margin:0;color:var(--accent);font-family:serif;letter-spacing:1px;font-size:24px}
+  .hud{margin-left:auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .stat{background:var(--panel);padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:6px;min-width:140px}
+  .stat .label{font-weight:700;font-size:13px;color:var(--muted)}
+  .bar{height:12px;background:rgba(255,255,255,0.05);border-radius:8px;overflow:hidden}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,#7b3b3b,#d38a5a);width:100%}
+
+  .stage{display:flex;gap:18px;padding:18px;align-items:stretch;flex-wrap:wrap}
+  .viewport{flex:1;min-height:420px;border-radius:8px;background:#060505;padding:18px;position:relative;overflow:hidden;border:1px solid rgba(0,0,0,0.4)}
+  /* characters container positions */
+  .character{
+    position:absolute;bottom:18px;display:flex;align-items:flex-end;justify-content:center;width:300px;height:0px;pointer-events:none;
+    transform: translateY(0);
+  }
+  .character img{width:260px;height:auto;image-rendering:pixelated;filter: drop-shadow(0 30px 40px rgba(0,0,0,0.8));transition:transform .18s ease}
+  .character.player{left:40px}
+  .character.enemy{right:40px}
+
+  /* idle floating animation */
+  @keyframes idleFloat { 0%{transform:translateY(0)}50%{transform:translateY(-8px)}100%{transform:translateY(0)} }
+  .character img.idle { animation: idleFloat 3s ease-in-out infinite; }
+
+  /* attack animations (classes toggled by JS) */
+  .attack-player img { transform: translateX(18px) translateY(-10px) scale(1.03); transition: transform .18s ease; }
+  .attack-enemy img  { transform: translateX(-18px) translateY(-8px) scale(1.02); transition: transform .18s ease; }
+  .shake { animation: shake 220ms linear; }
+  @keyframes shake {
+    0% { transform: translateY(0) }
+    25% { transform: translateY(-6px) }
+    50% { transform: translateY(0) }
+    75% { transform: translateY(-4px) }
+    100% { transform: translateY(0) }
+  }
+
+  .panel{width:360px;background:var(--panel);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:12px;align-self:center}
+  .dialog{text-align:center;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.02)}
+  .dialog p{margin:0;color:var(--muted)}
+  .big-word{margin-top:6px;font-size:36px;color:#f5efe0;letter-spacing:2px;font-family:serif;text-shadow:0 6px 18px rgba(0,0,0,0.7)}
+  .actions{display:flex;gap:12px;justify-content:center;margin-top:6px}
+  .action-btn{flex:1;padding:12px 8px;border-radius:10px;font-weight:700;font-size:16px;cursor:pointer;background:linear-gradient(180deg,#2f2320,#7a5f45);color:var(--muted);border:2px solid rgba(0,0,0,0.5);box-shadow:0 6px 20px rgba(0,0,0,0.6), inset 0 -3px 6px rgba(0,0,0,0.35)}
+  .action-btn:active{transform:translateY(2px)}
+  .feedback{height:46px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;background:linear-gradient(90deg, rgba(0,0,0,0.22), rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.02);color:var(--muted)}
+  .feedback.correct{background:linear-gradient(90deg, rgba(20,40,20,0.45), rgba(60,120,60,0.12));color:var(--win);border-color:rgba(80,180,80,0.12)}
+  .feedback.wrong{background:linear-gradient(90deg, rgba(40,20,20,0.45), rgba(120,60,60,0.12));color:var(--danger);border-color:rgba(180,80,80,0.12)}
+
+  /* inventory/potion button */
+  .panel .bottom-row{display:flex;gap:10px;justify-content:space-between}
+  .pill{padding:10px 14px;border-radius:8px;background:#231916;border:2px solid #541212;color:var(--muted);cursor:pointer;font-weight:700;min-width:140px;text-align:center}
+  .pill.potion{display:flex;align-items:center;gap:8px;justify-content:center}
+  .pill .count{background:#2b1b1b;padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.03);font-weight:800;color:var(--accent)}
+
+  /* responsive */
+  @media(max-width:640px){
+    .stage{flex-direction:column;gap:2px}
+    .panel{width:100%}
+    .hud{flex-direction:column;align-items:center;width:50%;margin-top:150px}
+    .stat{max-width:300px}
+    .character img{width:180px}
+    .character{width:220px;height:260px}
+}
+</style>
+</head>
+<body>
+  <div class="game-wrap" id="gameRoot">
+    <header>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <img src="https://i.imgur.com/3sL6Z7X.png" alt="logo" style="height:46px;filter:drop-shadow(0 6px 10px rgba(0,0,0,0.6))">
+        <div>
+          <h1 style="margin:0">Shadow of Words</h1>
+          <div style="font-size:12px;color:var(--muted)">Countable vs Uncountable — Dark Fantasy</div>
+        </div>
+      </div>
+
+      <div class="hud" id="hud">
+        <div class="stat">
+          <div class="label">Player HP</div>
+          <div class="bar"><i id="barPlayer" style="width:100%"></i></div>
+        </div>
+        <div class="stat">
+          <div class="label">Enemy HP</div>
+          <div class="bar"><i id="barEnemy" style="width:100%"></i></div>
+        </div>
+        <div class="stat" style="min-width:60px;text-align:center"><div style="font-weight:900;color:var(--accent)" id="score">0</div>⚔️</div>
+      </div>
+    </header>
+
+    <div class="stage">
+      <div class="viewport" id="viewport">
+        <div class="character player" id="playerChar">
+          <img id="playerSprite" class="idle" src="assets/knight.png" alt="player">
+        </div>
+        <div class="character enemy" id="enemyChar">
+          <img id="enemySprite" class="idle" src="assets/enemy.png" alt="enemy">
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="dialog">
+          <p style="margin:0">Face the cursed noun and decide its fate</p>
+          <div class="big-word" id="wordBox">—</div>
+          <div style="font-size:13px;color:var(--muted)">Press <strong>C</strong> or choose:</div>
+          <div class="actions" style="margin-top:12px">
+            <button class="action-btn" id="btnCount">Countable</button>
+            <button class="action-btn" id="btnUncount">Uncountable</button>
+          </div>
+        </div>
+
+        <div class="feedback" id="feedback">Start the trial to test your grammar</div>
+
+        <div class="bottom-row">
+          <button class="pill" id="btnStart">Start Trial</button>
+          <button class="pill potion" id="btnPotion">Potion <span class="count" id="potionCount">x1</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const QUESTIONS = [
+  {word:'apple', type:'countable', hint:'You can count apples one by one.'},
+  {word:'water', type:'uncountable', hint:'You cannot count water directly.'},
+  {word:'coin', type:'countable', hint:'Coins are individual items.'},
+  {word:'rice', type:'uncountable', hint:'It consists of many small grains.'},
+  {word:'sword', type:'countable', hint:'You can hold one sword or two swords.'},
+  {word:'sand', type:'uncountable', hint:'Too many grains to count!'},
+  {word:'chair', type:'countable', hint:'You can count chairs in a room.'},
+  {word:'milk', type:'uncountable', hint:'You measure it in liters, not pieces.'}
+];
+
+let playerHP=3,enemyHP=3,score=0,potionCount=1,current=null,busy=false;
+
+const barPlayer=document.getElementById('barPlayer'),
+barEnemy=document.getElementById('barEnemy'),
+wordBox=document.getElementById('wordBox'),
+feedback=document.getElementById('feedback'),
+btnCount=document.getElementById('btnCount'),
+btnUncount=document.getElementById('btnUncount'),
+btnStart=document.getElementById('btnStart'),
+btnPotion=document.getElementById('btnPotion'),
+btnHint=document.getElementById('btnHint'),
+potionCountEl=document.getElementById('potionCount'),
+playerChar=document.getElementById('playerChar'),
+enemyChar=document.getElementById('enemyChar'),
+playerSprite=document.getElementById('playerSprite'),
+enemySprite=document.getElementById('enemySprite'),
+scoreEl=document.getElementById('score');
+
+function updateUI(){
+  barPlayer.style.width=(playerHP/3*100)+'%';
+  barEnemy.style.width=(enemyHP/3*100)+'%';
+  potionCountEl.textContent='x'+potionCount;
+  scoreEl.textContent=score;
+}
+
+function pickQuestion(){
+  current=QUESTIONS[Math.floor(Math.random()*QUESTIONS.length)];
+  wordBox.textContent=current.word;
+  feedback.textContent='Choose: Countable or Uncountable';
+}
+
+function startTrial(){
+  playerHP=3;enemyHP=3;score=0;potionCount=1;
+  updateUI();
+  pickQuestion();
+  feedback.textContent='Battle begins!';
+}
+
+function playPlayerAttack(){playerChar.classList.add('attack-player');playerSprite.classList.remove('idle');setTimeout(()=>{playerChar.classList.remove('attack-player');playerSprite.classList.add('idle');},220);}
+function playEnemyAttack(){enemyChar.classList.add('attack-enemy');enemySprite.classList.remove('idle');setTimeout(()=>{enemyChar.classList.remove('attack-enemy');enemySprite.classList.add('idle');},220);}
+function shakeEnemy(){enemySprite.classList.add('shake');setTimeout(()=>enemySprite.classList.remove('shake'),220);}
+function shakePlayer(){playerSprite.classList.add('shake');setTimeout(()=>playerSprite.classList.remove('shake'),220);}
+
+function correctAnswer(){
+  playPlayerAttack();setTimeout(()=>shakeEnemy(),100);
+  enemyHP=Math.max(0,enemyHP-1);
+  score+=10;
+  feedback.textContent='✅ Correct! You hit the enemy.';
+  feedback.className='feedback correct';
+  updateUI();
+  if(enemyHP<=0){
+    setTimeout(()=>{
+      feedback.textContent='💀 Enemy defeated — you found a potion!';
+      potionCount++;updateUI();
+      setTimeout(()=>{enemyHP=3;updateUI();pickQuestion();},700);
+    },200);
+  }else{setTimeout(()=>pickQuestion(),450);}
+}
+
+function wrongAnswer(){
+  playEnemyAttack();setTimeout(()=>shakePlayer(),100);
+  playerHP=Math.max(0,playerHP-1);
+  feedback.textContent='❌ Wrong! The curse strikes you.';
+  feedback.className='feedback wrong';
+  updateUI();
+  if(playerHP<=0){
+    setTimeout(()=>{feedback.textContent='You were defeated... Press Start to retry.';wordBox.textContent='—';current=null;},200);
+  }else{setTimeout(()=>pickQuestion(),450);}
+}
+
+function answer(type){if(!current)return;if(type===current.type)correctAnswer();else wrongAnswer();}
+function usePotion(){
+  if(potionCount<=0){feedback.textContent='No potions left.';return;}
+  if(playerHP>=3){feedback.textContent='HP already full.';return;}
+  potionCount--;playerHP=Math.min(3,playerHP+1);
+  feedback.textContent='✨ You used a potion. +1 HP';feedback.className='feedback';updateUI();
+  playerSprite.style.transform='scale(1.04)';setTimeout(()=>playerSprite.style.transform='',260);
+}
+function showHint(){
+  if(!current){feedback.textContent='Start a game first!';return;}
+  feedback.textContent='💡 Hint: '+current.hint;
+  feedback.className='feedback';
+}
+
+btnCount.addEventListener('click',()=>answer('countable'));
+btnUncount.addEventListener('click',()=>answer('uncountable'));
+btnStart.addEventListener('click',()=>startTrial());
+btnPotion.addEventListener('click',()=>usePotion());
+btnHint.addEventListener('click',()=>showHint());
+
+document.addEventListener('keydown',e=>{
+  if(e.code==='KeyC')answer('countable');
+  if(e.code==='KeyU')answer('uncountable');
+  if(e.code==='Space')startTrial();
+});
+
+updateUI();
+feedback.textContent='Click Start to begin the trial. Press C or U to answer.';
+wordBox.textContent='—';
+playerSprite.classList.add('idle');enemySprite.classList.add('idle');
+</script>
+</body>
+</html>
